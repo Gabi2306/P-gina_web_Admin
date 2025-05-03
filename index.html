@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Agregar meta viewport para asegurar la responsividad -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Licorería Premium - Sistema de Gestión</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="login-container" class="container">
+        <div class="login-box">
+            <h2>Licorería Premium</h2>
+            
+            <div id="login">
+                <div class="form-group">
+                    <label for="login-email">Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="Ingrese su correo">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Ingrese su contraseña">
+                </div>
+                <div class="form-group">
+                    <label for="login-type">Tipo de Usuario</label>
+                    <select id="login-type">
+                        <option value="cliente">Cliente</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div id="login-error" class="error-message"></div>
+                <button id="login-btn" class="btn">Iniciar Sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Licorería Premium</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <p id="user-name">Nombre de Usuario</p>
+                    <p id="user-role">Rol</p>
+                </div>
+            </div>
+            <ul class="menu" id="admin-menu">
+                <li data-page="inicio"><i class="fas fa-home"></i> <span>Inicio</span></li>
+                <li data-page="ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></li>
+                <li data-page="productos"><i class="fas fa-wine-bottle"></i> <span>Productos</span></li>
+                <li data-page="clientes"><i class="fas fa-users"></i> <span>Clientes</span></li>
+                <li data-page="proveedores"><i class="fas fa-truck"></i> <span>Proveedores</span></li>
+                <li data-page="registro-usuarios"><i class="fas fa-user-plus"></i> <span>Registro de Usuarios</span></li>
+            </ul>
+            <ul class="menu" id="client-menu">
+                <li data-page="inicio-cliente"><i class="fas fa-home"></i> <span>Inicio</span></li>
+                <li data-page="catalogo"><i class="fas fa-store"></i> <span>Catálogo</span></li>
+                <li data-page="carrito"><i class="fas fa-shopping-cart"></i> <span>Carrito</span></li>
+                <li data-page="mis-compras"><i class="fas fa-receipt"></i> <span>Mis Compras</span></li>
+                <li data-page="perfil"><i class="fas fa-user-cog"></i> <span>Mi Perfil</span></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn-logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span></button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="content-container"></div>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/client.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
