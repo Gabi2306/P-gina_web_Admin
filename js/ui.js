@@ -288,18 +288,18 @@ const UI = (() => {
       }
 
       // Initialize page-specific scripts
-      if (pageName === "productos" && window.Admin) {
-        Admin.initProductsPage()
-      } else if (pageName === "proveedores" && window.Admin) {
-        Admin.initSuppliersPage()
-      } else if (pageName === "clientes" && window.Admin) {
-        Admin.initCustomersPage()
-      } else if (pageName === "ventas" && window.Admin) {
-        Admin.initSalesPage()
-      } else if (pageName === "registro-usuarios" && window.Admin) {
-        Admin.initUserRegistrationPage()
-      } else if (pageName === "inventario" && window.Admin) {
-        Admin.initInventoryReportPage()
+      if (pageName === "productos" && window.UIAdmin) {
+        UIAdmin.initProductsPage()
+      } else if (pageName === "proveedores" && window.UIAdmin) {
+        UIAdmin.initSuppliersPage()
+      } else if (pageName === "clientes" && window.UIAdmin) {
+        UIAdmin.initCustomersPage()
+      } else if (pageName === "ventas" && window.UIAdmin) {
+        UIAdmin.initSalesPage()
+      } else if (pageName === "registro-usuarios" && window.UIAdmin) {
+        UIAdmin.initUserRegistrationPage()
+      } else if (pageName === "inventario" && window.UIAdmin) {
+        UIAdmin.initInventoryReportPage()
       } else if (pageName === "catalogo" && window.Client) {
         Client.initCatalogPage()
       } else if (pageName === "carrito" && window.Client) {
@@ -308,8 +308,6 @@ const UI = (() => {
         Client.initMyPurchasesPage()
       } else if (pageName === "perfil" && window.Client) {
         Client.initProfilePage()
-      } else if (pageName === "inicio-cliente" && window.Client) {
-        Client.initClientDashboard()
       }
 
       // Close sidebar on mobile after navigation
