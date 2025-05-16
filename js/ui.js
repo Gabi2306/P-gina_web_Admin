@@ -130,6 +130,18 @@ const UI = (() => {
           border-top: 1px solid #ddd;
         }
         
+        .text-danger {
+          color: #e74c3c;
+        }
+        
+        .text-warning {
+          color: #f39c12;
+        }
+        
+        .fw-bold {
+          font-weight: bold;
+        }
+        
         @media (max-width: 768px) {
           .modal-content {
             width: 95%;
@@ -286,6 +298,8 @@ const UI = (() => {
         Admin.initSalesPage()
       } else if (pageName === "registro-usuarios" && window.Admin) {
         Admin.initUserRegistrationPage()
+      } else if (pageName === "inventario" && window.Admin) {
+        Admin.initInventoryReportPage()
       } else if (pageName === "catalogo" && window.Client) {
         Client.initCatalogPage()
       } else if (pageName === "carrito" && window.Client) {
@@ -333,6 +347,50 @@ const UI = (() => {
       }
     },
 
+    // Función para formatear moneda en pesos colombianos
+    formatCurrency: (value) => {
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      }).format(value);
+    },
+    
+    // Función para obtener información de stock formateada para la visualización
+    formatStockInfo: (product) => {
+      if (typeof product.stock === 'object') {
+        let stockClass = "";
+        
+        // Determinar clase CSS basada en el nivel de stock
+        if (product.stock.bottles <= product.stock.minStock / 2) {
+          stockClass = "text-danger fw-bold";
+        } else if (product.stock.bottles <= product.stock.minStock) {
+          stockClass = "text-warning fw-bold";
+        }
+        
+        return {
+          display: `${product.stock.bottles} unidades (${product.stock.boxes} cajas)<br>
+                    <small>${product.stock.unit} - ${product.stock.location}</small>`,
+          class: stockClass,
+          count: product.stock.bottles
+        };
+      } else {
+        // Retrocompatibilidad para productos con stock como número
+        let stockClass = "";
+        if (product.stock < 5) {
+          stockClass = "text-danger fw-bold";
+        } else if (product.stock < 10) {
+          stockClass = "text-warning fw-bold";
+        }
+        
+        return {
+          display: `${product.stock} unidades`,
+          class: stockClass,
+          count: product.stock
+        };
+      }
+    },
+
     createAdminPage: function (pageName) {
       console.log("Creating admin page:", pageName)
       switch (pageName) {
@@ -348,6 +406,8 @@ const UI = (() => {
           return this.createSuppliersPage()
         case "registro-usuarios":
           return this.createUserRegistrationPage()
+        case "inventario":
+          return this.createInventoryReportPage()
         default:
           return '<div class="card"><div class="card-body">Página no encontrada</div></div>'
       }
@@ -378,9 +438,15 @@ const UI = (() => {
 
       // Calculate total sales
       const totalSales = sales.reduce((total, sale) => total + sale.total, 0)
+      
+      // Calcular valor total del inventario
+      const totalInventoryValue = window.DB.getTotalInventoryValue();
 
       // Get recent sales
       const recentSales = sales.slice(0, 5)
+      
+      // Obtener productos con bajo stock
+      const lowStockProducts = window.DB.getLowStockProducts();
 
       return `
         <h1>Panel de Administración - Licorería Premium</h1>
@@ -409,7 +475,7 @@ const UI = (() => {
             </div>
             <div class="widget-content">
               <div class="widget-title">Ventas Totales</div>
-              <div class="widget-value">$${totalSales.toFixed(2)}</div>
+              <div class="widget-value">${window.DB.formatCurrency(totalSales)}</div>
             </div>
           </div>
           
@@ -435,11 +501,11 @@ const UI = (() => {
           
           <div class="widget widget-orders">
             <div class="widget-icon">
-              <i class="fas fa-receipt"></i>
+              <i class="fas fa-boxes"></i>
             </div>
             <div class="widget-content">
-              <div class="widget-title">Órdenes</div>
-              <div class="widget-value">${sales.length}</div>
+              <div class="widget-title">Valor Inventario</div>
+              <div class="widget-value">${window.DB.formatCurrency(totalInventoryValue)}</div>
             </div>
           </div>
         </div>
@@ -469,7 +535,7 @@ const UI = (() => {
                           <td>${sale.id}</td>
                           <td>${customer ? customer.name : "Cliente Desconocido"}</td>
                           <td>${new Date(sale.date).toLocaleString()}</td>
-                          <td>$${sale.total.toFixed(2)}</td>
+                          <td>${window.DB.formatCurrency(sale.total)}</td>
                           <td>
                             <button class="btn btn-sm btn-primary view-sale" data-id="${sale.id}">
                               <i class="fas fa-eye"></i>
@@ -496,20 +562,53 @@ const UI = (() => {
                   <tr>
                     <th>Producto</th>
                     <th>Precio</th>
-                    <th>Stock</th>
+                    <th>Stock Actual</th>
+                    <th>Stock Mínimo</th>
+                    <th>Ubicación</th>
                     <th>Proveedor</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${products
-                    .filter((product) => product.stock < 10)
+                  ${lowStockProducts
                     .map((product) => {
-                      const supplier = window.DB.getSupplier(product.supplier)
+                      const supplier = window.DB.getSupplier(product.supplier);
+                      
+                      // Preparar información de stock
+                      let stockInfo;
+                      let minStockInfo;
+                      let stockClass = "";
+                      let locationInfo;
+                      
+                      if (typeof product.stock === 'object') {
+                        stockInfo = `${product.stock.bottles} unidades`;
+                        minStockInfo = `${product.stock.minStock} unidades`;
+                        locationInfo = product.stock.location;
+                        
+                        // Determinar clase CSS basada en el nivel de stock
+                        if (product.stock.bottles <= product.stock.minStock / 2) {
+                          stockClass = "text-danger fw-bold";
+                        } else if (product.stock.bottles <= product.stock.minStock) {
+                          stockClass = "text-warning fw-bold";
+                        }
+                      } else {
+                        stockInfo = `${product.stock} unidades`;
+                        minStockInfo = "10 unidades";
+                        locationInfo = "Almacén Principal";
+                        
+                        if (product.stock < 5) {
+                          stockClass = "text-danger fw-bold";
+                        } else if (product.stock < 10) {
+                          stockClass = "text-warning fw-bold";
+                        }
+                      }
+                      
                       return `
                         <tr>
                           <td>${product.name}</td>
-                          <td>$${product.price.toFixed(2)}</td>
-                          <td>${product.stock}</td>
+                          <td>${window.DB.formatCurrency(product.price)}</td>
+                          <td class="${stockClass}">${stockInfo}</td>
+                          <td>${minStockInfo}</td>
+                          <td>${locationInfo}</td>
                           <td>${supplier ? supplier.name : "Proveedor Desconocido"}</td>
                         </tr>
                       `
@@ -534,6 +633,30 @@ const UI = (() => {
             <h3 class="card-title">Todas las Ventas</h3>
           </div>
           <div class="card-body">
+            <div class="form-row mb-3">
+              <div class="form-col">
+                <label for="sales-start-date">Fecha Inicio</label>
+                <input type="date" id="sales-start-date" class="form-control">
+              </div>
+              <div class="form-col">
+                <label for="sales-end-date">Fecha Fin</label>
+                <input type="date" id="sales-end-date" class="form-control">
+              </div>
+              <div class="form-col d-flex align-items-end">
+                <button id="period-sales-btn" class="btn btn-primary">
+                  <i class="fas fa-calendar"></i> Filtrar por Período
+                </button>
+              </div>
+              <div class="form-col d-flex align-items-end">
+                <button id="category-sales-btn" class="btn btn-secondary">
+                  <i class="fas fa-chart-pie"></i> Ver por Categoría
+                </button>
+              </div>
+            </div>
+            
+            <div id="period-summary"></div>
+            <div id="category-summary"></div>
+            
             <div class="search-box">
               <input type="text" id="search-sales" placeholder="Buscar por cliente...">
               <button id="search-sales-btn"><i class="fas fa-search"></i></button>
@@ -559,7 +682,7 @@ const UI = (() => {
                           <td>${sale.id}</td>
                           <td>${customer ? customer.name : "Cliente Desconocido"}</td>
                           <td>${new Date(sale.date).toLocaleString()}</td>
-                          <td>$${sale.total.toFixed(2)}</td>
+                          <td>${window.DB.formatCurrency(sale.total)}</td>
                           <td>
                             <button class="btn btn-sm btn-primary view-sale" data-id="${sale.id}">
                               <i class="fas fa-eye"></i>
@@ -599,9 +722,14 @@ const UI = (() => {
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Productos</h3>
-            <button id="add-product-btn" class="btn btn-sm btn-primary">
-              <i class="fas fa-plus"></i> Nuevo Producto
-            </button>
+            <div>
+              <button id="low-stock-btn" class="btn btn-sm btn-warning me-2">
+                <i class="fas fa-exclamation-circle"></i> Ver Bajo Stock
+              </button>
+              <button id="add-product-btn" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Producto
+              </button>
+            </div>
           </div>
           <div class="card-body">
             <div class="search-box">
@@ -624,13 +752,17 @@ const UI = (() => {
                 <tbody>
                   ${products
                     .map((product) => {
-                      const supplier = window.DB.getSupplier(product.supplier)
+                      const supplier = window.DB.getSupplier(product.supplier);
+                      
+                      // Preparar información de stock
+                      const stockInfo = UI.formatStockInfo(product);
+                      
                       return `
                         <tr>
                           <td>${product.name}</td>
                           <td>${product.description}</td>
-                          <td>$${product.price.toFixed(2)}</td>
-                          <td>${product.stock}</td>
+                          <td>${window.DB.formatCurrency(product.price)}</td>
+                          <td class="${stockInfo.class}">${stockInfo.display}</td>
                           <td>${supplier ? supplier.name : "Proveedor Desconocido"}</td>
                           <td>
                             <button class="btn btn-sm btn-primary edit-product" data-id="${product.id}">
@@ -646,73 +778,6 @@ const UI = (() => {
                     .join("")}
                 </tbody>
               </table>
-            </div>
-          </div>
-        </div>
-        
-        <div id="product-modal" class="modal">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h3 id="product-modal-title">Nuevo Producto</h3>
-              <span class="close">&times;</span>
-            </div>
-            <div class="modal-body">
-              <form id="product-form">
-                <input type="hidden" id="product-id">
-                
-                <div class="form-group">
-                  <label for="product-name">Nombre</label>
-                  <input type="text" id="product-name" required>
-                </div>
-                
-                <div class="form-group">
-                  <label for="product-description">Descripción</label>
-                  <textarea id="product-description" rows="3" required></textarea>
-                </div>
-                
-                <div class="form-row">
-                  <div class="form-col">
-                    <label for="product-price">Precio</label>
-                    <input type="number" id="product-price" step="0.01" min="0" required>
-                  </div>
-                  
-                  <div class="form-col">
-                    <label for="product-stock">Stock</label>
-                    <input type="number" id="product-stock" min="0" required>
-                  </div>
-                </div>
-                
-                <div class="form-row">
-                  <div class="form-col">
-                    <label for="product-category">Categoría</label>
-                    <input type="text" id="product-category" required>
-                  </div>
-                  
-                  <div class="form-col">
-                    <label for="product-supplier">Proveedor</label>
-                    <select id="product-supplier" required>
-                      <option value="">Seleccionar Proveedor</option>
-                      ${suppliers
-                        .map(
-                          (supplier) => `
-                          <option value="${supplier.id}">${supplier.name}</option>
-                        `,
-                        )
-                        .join("")}
-                    </select>
-                  </div>
-                </div>
-                
-                <div class="form-group">
-                  <label for="product-image">Imagen (URL)</label>
-                  <input type="text" id="product-image">
-                </div>
-                
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary">Guardar</button>
-                  <button type="button" class="btn btn-danger" id="cancel-product">Cancelar</button>
-                </div>
-              </form>
             </div>
           </div>
         </div>
@@ -760,7 +825,7 @@ const UI = (() => {
                           <td>
                             ${customerSales.length} compras
                             <br>
-                            <small>Total: $${totalSpent.toFixed(2)}</small>
+                            <small>Total: ${window.DB.formatCurrency(totalSpent)}</small>
                           </td>
                           <td>
                             <button class="btn btn-sm btn-primary view-customer-sales" data-id="${customer.id}">
@@ -982,6 +1047,29 @@ const UI = (() => {
         </div>
       `
     },
+    
+    // Página de reportes de inventario
+    createInventoryReportPage: function() {
+      return `
+        <h1>Reporte de Inventario</h1>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Generación de Reportes</h3>
+          </div>
+          <div class="card-body">
+            <p>Utilice esta herramienta para generar reportes detallados del inventario actual.</p>
+            <button id="generate-inventory-report" class="btn btn-primary">
+              <i class="fas fa-file-alt"></i> Generar Reporte
+            </button>
+          </div>
+        </div>
+        
+        <div id="inventory-report">
+          <!-- El reporte generado se mostrará aquí -->
+        </div>
+      `;
+    },
 
     // Helper function to get all users
     getAllUsers: () => JSON.parse(localStorage.getItem("users") || "[]"),
@@ -1028,7 +1116,7 @@ const UI = (() => {
             </div>
             <div class="widget-content">
               <div class="widget-title">Total Gastado</div>
-              <div class="widget-value">$${totalSpent.toFixed(2)}</div>
+              <div class="widget-value">${window.DB.formatCurrency(totalSpent)}</div>
             </div>
           </div>
         </div>
@@ -1049,7 +1137,7 @@ const UI = (() => {
                     </div>
                     <div class="product-details">
                       <h3 class="product-title">${product.name}</h3>
-                      <div class="product-price">$${product.price.toFixed(2)}</div>
+                      <div class="product-price">${window.DB.formatCurrency(product.price)}</div>
                       <p class="product-description">${product.description.substring(0, 60)}...</p>
                       <button class="btn btn-primary view-product-details" data-id="${product.id}">Ver Detalles</button>
                     </div>
@@ -1083,7 +1171,7 @@ const UI = (() => {
                       (sale) => `
                       <tr>
                         <td>${new Date(sale.date).toLocaleString()}</td>
-                        <td>$${sale.total.toFixed(2)}</td>
+                        <td>${window.DB.formatCurrency(sale.total)}</td>
                         <td>${sale.items.length} productos</td>
                         <td>
                           <button class="btn btn-sm btn-primary view-sale-details" data-id="${sale.id}">
@@ -1116,22 +1204,32 @@ const UI = (() => {
         <div class="product-grid">
           ${products
             .map(
-              (product) => `
-              <div class="product-card">
-                <div class="product-image">
-                  <img src="${product.image || "https://via.placeholder.com/150"}" alt="${product.name}">
+              (product) => {
+                // Obtener información de stock
+                const stockInfo = UI.formatStockInfo(product);
+                const isAvailable = stockInfo.count > 0;
+                
+                return `
+                <div class="product-card">
+                  <div class="product-image">
+                    <img src="${product.image || "https://via.placeholder.com/150"}" alt="${product.name}">
+                  </div>
+                  <div class="product-details">
+                    <h3 class="product-title">${product.name}</h3>
+                    <div class="product-price">${window.DB.formatCurrency(product.price)}</div>
+                    <p class="product-description">${product.description.substring(0, 60)}...</p>
+                    ${isAvailable ? 
+                      `<button class="btn btn-primary add-to-cart" data-id="${product.id}">
+                        <i class="fas fa-cart-plus"></i> Añadir al Carrito
+                      </button>` :
+                      `<button class="btn btn-danger" disabled>
+                        Agotado
+                      </button>`
+                    }
+                  </div>
                 </div>
-                <div class="product-details">
-                  <h3 class="product-title">${product.name}</h3>
-                  <div class="product-price">$${product.price.toFixed(2)}</div>
-                  <p class="product-description">${product.description.substring(0, 60)}...</p>
-                  <button class="btn btn-primary add-to-cart" data-id="${product.id}">
-                    <i class="fas fa-cart-plus"></i> Añadir al Carrito
-                  </button>
-                </div>
-              </div>
-            `,
-            )
+              `
+            })
             .join("")}
         </div>
         
@@ -1201,7 +1299,7 @@ const UI = (() => {
                             ? `
                               <tr>
                                 <td>${product.name}</td>
-                                <td>$${product.price.toFixed(2)}</td>
+                                <td>${window.DB.formatCurrency(product.price)}</td>
                                 <td>
                                   <div class="quantity-control">
                                     <button class="btn btn-sm btn-danger decrease-quantity" data-id="${product.id}">-</button>
@@ -1209,7 +1307,7 @@ const UI = (() => {
                                     <button class="btn btn-sm btn-primary increase-quantity" data-id="${product.id}">+</button>
                                   </div>
                                 </td>
-                                <td>$${subtotal.toFixed(2)}</td>
+                                <td>${window.DB.formatCurrency(subtotal)}</td>
                                 <td>
                                   <button class="btn btn-sm btn-danger remove-from-cart" data-id="${product.id}">
                                     <i class="fas fa-trash"></i>
@@ -1224,7 +1322,7 @@ const UI = (() => {
                     <tfoot>
                       <tr>
                         <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                        <td>$${total.toFixed(2)}</td>
+                        <td>${window.DB.formatCurrency(total)}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -1256,12 +1354,12 @@ const UI = (() => {
                 <div class="form-row">
                   <div class="form-col">
                     <label for="checkout-city">Ciudad</label>
-                    <input type="text" id="checkout-city" required>
+                    <input type="text" id="checkout-city" value="Santa Marta" required>
                   </div>
                   
                   <div class="form-col">
                     <label for="checkout-zip">Código Postal</label>
-                    <input type="text" id="checkout-zip" required>
+                    <input type="text" id="checkout-zip" value="47001" required>
                   </div>
                 </div>
                 
@@ -1272,6 +1370,8 @@ const UI = (() => {
                     <option value="credit_card">Tarjeta de Crédito</option>
                     <option value="debit_card">Tarjeta de Débito</option>
                     <option value="paypal">PayPal</option>
+                    <option value="nequi">Nequi</option>
+                    <option value="daviplata">Daviplata</option>
                   </select>
                 </div>
                 
@@ -1296,7 +1396,7 @@ const UI = (() => {
                 
                 <div class="order-summary">
                   <h4>Resumen del Pedido</h4>
-                  <p>Total: <strong>$${total.toFixed(2)}</strong></p>
+                  <p>Total: <strong>${window.DB.formatCurrency(total)}</strong></p>
                 </div>
                 
                 <div class="form-actions">
@@ -1350,7 +1450,7 @@ const UI = (() => {
                           (sale) => `
                           <tr>
                             <td>${new Date(sale.date).toLocaleString()}</td>
-                            <td>$${sale.total.toFixed(2)}</td>
+                            <td>${window.DB.formatCurrency(sale.total)}</td>
                             <td>${sale.items.length} productos</td>
                             <td><span class="badge badge-success">Completado</span></td>
                             <td>

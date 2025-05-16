@@ -57,6 +57,7 @@
                 <li data-page="inicio"><i class="fas fa-home"></i> <span>Inicio</span></li>
                 <li data-page="ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></li>
                 <li data-page="productos"><i class="fas fa-wine-bottle"></i> <span>Productos</span></li>
+                <li data-page="inventario"><i class="fas fa-boxes"></i> <span>Inventario</span></li>
                 <li data-page="clientes"><i class="fas fa-users"></i> <span>Clientes</span></li>
                 <li data-page="proveedores"><i class="fas fa-truck"></i> <span>Proveedores</span></li>
                 <li data-page="registro-usuarios"><i class="fas fa-user-plus"></i> <span>Registro de Usuarios</span></li>
@@ -76,6 +77,91 @@
         <!-- Main Content -->
         <div class="main-content">
             <div id="content-container"></div>
+        </div>
+    </div>
+
+    <!-- Agregar modales para formularios de productos -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Producto</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="product-form">
+                    <input type="hidden" id="product-id">
+                    
+                    <div class="form-group">
+                        <label for="product-name">Nombre</label>
+                        <input type="text" id="product-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="product-description">Descripción</label>
+                        <textarea id="product-description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="product-price">Precio (COP)</label>
+                            <input type="number" id="product-price" step="1000" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Información de Stock</label>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="product-bottles">Unidades</label>
+                                <input type="number" id="product-bottles" min="0" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="product-boxes">Cajas</label>
+                                <input type="number" id="product-boxes" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="product-unit">Tamaño</label>
+                                <input type="text" id="product-unit" value="750ml" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="product-min-stock">Stock Mínimo</label>
+                                <input type="number" id="product-min-stock" min="0" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-location">Ubicación</label>
+                            <input type="text" id="product-location" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="product-category">Categoría</label>
+                            <input type="text" id="product-category" required>
+                        </div>
+                        
+                        <div class="form-col">
+                            <label for="product-supplier">Proveedor</label>
+                            <select id="product-supplier" required>
+                                <option value="">Seleccionar Proveedor</option>
+                                <!-- Los proveedores se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="product-image">Imagen (URL)</label>
+                        <input type="text" id="product-image">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="button" class="btn btn-danger" id="cancel-product">Cancelar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
