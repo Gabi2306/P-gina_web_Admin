@@ -308,6 +308,8 @@ const UI = (() => {
         Client.initMyPurchasesPage()
       } else if (pageName === "perfil" && window.Client) {
         Client.initProfilePage()
+      } else if (pageName === "inicio-cliente" && window.Client) {
+        Client.initClientDashboard()
       }
 
       // Close sidebar on mobile after navigation
@@ -1139,7 +1141,14 @@ const UI = (() => {
                       <h3 class="product-title">${product.name}</h3>
                       <div class="product-price">${window.DB.formatCurrency(product.price)}</div>
                       <p class="product-description">${product.description.substring(0, 60)}...</p>
-                      <button class="btn btn-primary view-product-details" data-id="${product.id}">Ver Detalles</button>
+                      ${typeof product.stock === 'object' && product.stock.bottles > 0 || typeof product.stock === 'number' && product.stock > 0 ?
+                        `<button class="btn btn-primary add-to-cart" data-id="${product.id}">
+                          <i class="fas fa-cart-plus"></i> Añadir al Carrito
+                        </button>` :
+                        `<button class="btn btn-danger" disabled>
+                          Agotado
+                        </button>`
+                      }
                     </div>
                   </div>
                 `,
@@ -1174,7 +1183,7 @@ const UI = (() => {
                         <td>${window.DB.formatCurrency(sale.total)}</td>
                         <td>${sale.items.length} productos</td>
                         <td>
-                          <button class="btn btn-sm btn-primary view-sale-details" data-id="${sale.id}">
+                          <button class="btn btn-sm btn-primary view-purchase-details" data-id="${sale.id}">
                             <i class="fas fa-eye"></i> Ver Detalles
                           </button>
                         </td>
@@ -1184,6 +1193,18 @@ const UI = (() => {
                     .join("")}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="purchase-detail-modal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Detalles de la Compra</h3>
+              <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="purchase-detail-content">
+              <!-- Purchase details will be loaded here -->
             </div>
           </div>
         </div>

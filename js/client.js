@@ -520,6 +520,42 @@ const Client = (() => {
         }
       })
     },
+    initClientDashboard: () => {
+      // Agregar al carrito desde la página de inicio
+      const addToCartBtns = document.querySelectorAll(".add-to-cart")
+      addToCartBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const productId = this.getAttribute("data-id")
+          const product = window.DB.getProduct(productId)
+          
+          // Verificar disponibilidad
+          let availableStock = 0
+          if (typeof product.stock === 'object') {
+            availableStock = product.stock.bottles
+          } else {
+            availableStock = product.stock
+          }
+
+          if (product && availableStock > 0) {
+            window.DB.addToCart({
+              productId: product.id,
+              quantity: 1,
+            })
+
+            alert("Producto añadido al carrito.")
+          }
+        })
+      })
+      
+      // Ver detalles de compras desde la página de inicio
+      const viewPurchaseDetailsBtns = document.querySelectorAll(".view-purchase-details")
+      viewPurchaseDetailsBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const saleId = this.getAttribute("data-id")
+          showPurchaseDetails(saleId)
+        })
+      })
+    },    
   }
 })()
 
