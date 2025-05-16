@@ -308,6 +308,8 @@ const UI = (() => {
         Client.initMyPurchasesPage()
       } else if (pageName === "perfil" && window.Client) {
         Client.initProfilePage()
+      } else if (pageName === "inicio-cliente" && window.Client) {
+        Client.initClientDashboard()
       }
 
       // Close sidebar on mobile after navigation
