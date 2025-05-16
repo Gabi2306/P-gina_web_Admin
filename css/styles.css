@@ -144,12 +144,18 @@ body {
 }
 
 .sidebar {
-  width: 20%;
+  width: 250px;
   background-color: var(--sidebar-bg);
   color: var(--light-text);
   transition: all 0.3s;
   display: flex;
   flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1000;
 }
 
 .sidebar-header {
@@ -257,11 +263,17 @@ body {
 }
 
 .main-content {
-  flex: 1;
+  margin-left: 250px;
   padding: 2%;
-  overflow-y: auto;
-  width: 80%;
+  width: calc(100% - 250px);
+  transition: all 0.3s;
+  min-height: 100vh;
 }
+
+.mobile-header {
+  display: none;
+}
+
 
 /* Card Styles */
 .card {
