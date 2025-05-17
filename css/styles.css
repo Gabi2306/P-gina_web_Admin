@@ -270,6 +270,11 @@ body {
   min-height: 100vh;
 }
 
+.mobile-header {
+  display: none;
+}
+
+
 /* Card Styles */
 .card {
   background-color: var(--card-bg);
